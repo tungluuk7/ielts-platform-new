@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:5000/api";
+const API_URL = "http://ielts-platform-new.onrender.com/api";
 
 /* =========================
    LẤY TẤT CẢ ĐỀ
