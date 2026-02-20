@@ -1,6 +1,18 @@
 // js/main.js
 import { getAllExams } from './storage.js';
 
+let allExams = [];   // 👈 thêm dòng này
+
+document.addEventListener("DOMContentLoaded", async () => {
+    try {
+        allExams = await getAllExams();  // 👈 lấy dữ liệu từ backend
+        console.log("Loaded exams:", allExams);
+        renderCourses();  // 👈 gọi render sau khi đã có data
+    } catch (error) {
+        console.error("Failed to load exams:", error);
+    }
+});
+
 document.addEventListener('DOMContentLoaded', () => {
     const courseList = document.getElementById('course-list');
     const filterBtns = document.querySelectorAll('.filter-btn');
