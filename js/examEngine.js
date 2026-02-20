@@ -8,7 +8,7 @@ import { renderSpeaking } from './speaking.js';
 
 window.examTimerInterval = null;
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const examId = urlParams.get('id');
     
@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    const examData = getExamById(examId);
+    const examData = await getExamById(examId);
     if (!examData) {
         alert("Đề thi không tồn tại trong hệ thống.");
         window.location.href = '../index.html';
