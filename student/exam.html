@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam - IELTS Platform</title>
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+
+<body class="exam-body">
+
+    <!-- HEADER -->
+    <header class="exam-header">
+        <div class="exam-title" id="exam-title">Loading...</div>
+        <div style="display:flex; align-items:center; gap:24px;">
+            <div class="exam-timer" id="countdown">00:00:00</div>
+            <button class="btn btn-secondary" id="dark-mode-toggle">Giao diện Tối</button>
+            <button id="btn-submit-exam" class="btn btn-primary">Submit Test</button>
+            <button class="btn btn-secondary" onclick="window.location.href='./index.html'">Exit</button>
+        </div>
+    </header>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+        <div class="progress-fill" id="exam-progress"></div>
+    </div>
+
+    <!-- MAIN LAYOUT -->
+    <main class="exam-layout">
+        <div class="exam-split-container">
+
+            <div class="exam-left-pane">
+                <div class="pane-content-card" id="exam-material-pane"></div>
+            </div>
+
+            <div class="exam-right-pane">
+                <div class="pane-content-card" id="exam-questions-pane"></div>
+            </div>
+
+        </div>
+
+        <aside class="exam-palette">
+            <h3>Question Navigator</h3>
+            <p style="font-size:13px; color:var(--text-muted)">
+                Click a number to jump to question
+            </p>
+            <div class="palette-grid" id="question-palette"></div>
+        </aside>
+    </main>
+
+    <!-- SCRIPTS -->
+    <script src="./js/darkmode.js"></script>
+    <script type="module" src="./js/examEngine.js"></script>
+
+</body>
+</html>

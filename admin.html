@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - IELTS Platform</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="nav-container">
+            <div class="logo">Admin Panel</div>
+            <a href="index.html" class="btn btn-secondary">Quay lại trang học viên</a>
+        </div>
+    </header>
+
+    <section class="section">
+            <h2 class="section-title">Cấu hình Hệ thống AI</h2>
+            <div class="pane-content-card" style="border-top: 4px solid #8b5cf6;">
+                <div class="builder-form-group">
+                    <label>Google Gemini API Key (Dùng để tự động chấm Writing):</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="password" id="admin-api-key" class="builder-input" placeholder="Nhập API Key bắt đầu bằng AIzaSy...">
+                        <button id="btn-save-api" class="btn btn-primary" style="background-color: #8b5cf6;">Lưu Key</button>
+                    </div>
+                    <p style="font-size: 13px; color: var(--text-muted); margin-top: 8px;">* Bạn có thể lấy API Key miễn phí tại Google AI Studio. Key được lưu an toàn trên trình duyệt của bạn.</p>
+                </div>
+            </div>
+        </section>
+
+    <main class="container">
+        <section class="section">
+            <h2 class="section-title">Quản lý đề thi</h2>
+            <div id="admin-exam-list" class="course-grid"></div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Tạo đề thi mới (Visual Builder)</h2>
+            <div class="pane-content-card">
+                <form id="exam-builder-form">
+                    
+                    <div class="flex-row">
+                        <div class="builder-form-group">
+                            <label>Tiêu đề bài thi:</label>
+                            <input type="text" id="b-title" class="builder-input" placeholder="VD: Cambridge 16 - Test 1" required>
+                        </div>
+                        <div class="builder-form-group">
+                            <label>Kỹ năng:</label>
+                            <select id="b-skill" class="builder-input">
+                                <option value="reading">Reading</option>
+                                <option value="listening">Listening</option>
+                                <option value="writing">Writing</option>
+                                <option value="speaking">Speaking</option>
+                            </select>
+                        </div>
+                        <div class="builder-form-group">
+                            <label>Thời gian (Phút):</label>
+                            <input type="number" id="b-duration" class="builder-input" value="60" required>
+                        </div>
+                    </div>
+
+                    <div class="builder-form-group" id="b-audio-group" style="display: none;">
+                        <label>Đường dẫn Audio (Dành cho Listening):</label>
+                        <input type="text" id="b-audio" class="builder-input" placeholder="Nhập URL file mp3...">
+                    </div>
+
+                    <hr style="margin: 24px 0; border: none; border-top: 1px solid var(--border-color);">
+
+                    <div id="b-sections-container"></div>
+
+                    <div style="margin-top: 20px; display: flex; gap: 12px;">
+                        <button type="button" id="btn-add-section" class="btn btn-secondary">+ Thêm Section (Passage/Part/Task)</button>
+                        <button type="submit" class="btn btn-primary" style="margin-left: auto;">Lưu Đề Thi</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+        <section class="section" style="margin-top: 40px;">
+            <h2 class="section-title">Tạo Full Test (Gói 4 Kỹ Năng)</h2>
+            <div class="pane-content-card" style="border-top: 4px solid var(--primary-color);">
+                <p style="color: var(--text-muted); margin-bottom: 20px;">* Hãy đảm bảo bạn đã tạo sẵn các đề lẻ ở trên trước khi gộp chúng thành Full Test.</p>
+                
+                <form id="full-test-builder-form">
+                    <div class="builder-form-group">
+                        <label>Tiêu đề Full Test:</label>
+                        <input type="text" id="ft-title" class="builder-input" placeholder="VD: Cambridge IELTS 16 - Full Test" required>
+                    </div>
+                    
+                    <div class="flex-row">
+                        <div class="builder-form-group">
+                            <label>Chọn đề Listening:</label>
+                            <select id="ft-listening" class="builder-input" required></select>
+                        </div>
+                        <div class="builder-form-group">
+                            <label>Chọn đề Reading:</label>
+                            <select id="ft-reading" class="builder-input" required></select>
+                        </div>
+                    </div>
+                    
+                    <div class="flex-row">
+                        <div class="builder-form-group">
+                            <label>Chọn đề Writing:</label>
+                            <select id="ft-writing" class="builder-input" required></select>
+                        </div>
+                        <div class="builder-form-group">
+                            <label>Chọn đề Speaking:</label>
+                            <select id="ft-speaking" class="builder-input" required></select>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px; font-size: 16px;">Tạo & Lưu Full Test</button>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <script type="module" src="js/admin.js"></script>
+</body>
+</html>

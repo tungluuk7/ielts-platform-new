@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IELTS Online Practice</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="nav-container">
+            <div class="logo">IELTS Platform</div>
+            <div>
+                <button class="btn btn-secondary" id="dark-mode-toggle">Giao diện Tối</button>
+                <a href="admin.html" class="btn btn-secondary" style="margin-left: 10px;">Admin Panel</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="section" style="margin-top: 20px;">
+            <h2 class="section-title">Explore Practice Tests</h2>
+            <div id="course-list" class="course-grid">
+                </div>
+            <div class="category-filter">
+                <section class="section" style="margin-top: 20px;">
+            <h2 class="section-title">Explore Practice Tests</h2>
+            
+            <div class="category-filter" id="category-filter">
+                <button class="filter-btn active" data-filter="all">All Skills</button>
+                <button class="filter-btn" data-filter="reading">Reading</button>
+                <button class="filter-btn" data-filter="listening">Listening</button>
+                <button class="filter-btn" data-filter="writing">Writing</button>
+                <button class="filter-btn" data-filter="speaking">Speaking</button>
+                <button class="filter-btn" data-filter="full">Full Test</button>
+            </div>
+
+            <div id="course-list" class="course-grid">
+                </div>
+        </section>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/darkmode.js"></script>
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
