@@ -5,11 +5,16 @@ let allExams = [];   // 👈 thêm dòng này
 
 document.addEventListener("DOMContentLoaded", async () => {
     try {
-        allExams = await getAllExams();  // 👈 lấy dữ liệu từ backend
-        console.log("Loaded exams:", allExams);
-        renderCourses();  // 👈 gọi render sau khi đã có data
+        const data = await getAllExams();
+        console.log("API response:", data);
+        console.log("Is array?", Array.isArray(data));
+
+        allExams = Array.isArray(data) ? data : [];
+        renderCourses();
     } catch (error) {
         console.error("Failed to load exams:", error);
+        allExams = [];
+        renderCourses();
     }
 });
 
