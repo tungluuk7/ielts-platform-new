@@ -95,3 +95,56 @@ app.delete("/api/exams/:id", async (req, res) => {
 app.listen(5000, () => {
   console.log("🚀 Server running on port 5000");
 });
+
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+app.post("/api/grade-writing", async (req, res) => {
+  try {
+    const { essay, taskType } = req.body;
+
+    const prompt = `
+You are an IELTS Writing examiner.
+
+Evaluate the following IELTS ${taskType} essay.
+
+Give:
+- Overall Band Score
+- Task Response
+- Coherence & Cohesion
+- Lexical Resource
+- Grammatical Range & Accuracy
+- Detailed feedback
+
+Essay:
+${essay}
+`;
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: prompt }]
+            }
+          ]
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    const result =
+      data.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+
+    res.json({ result });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Grading failed" });
+  }
+});
