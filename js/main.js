@@ -3,31 +3,7 @@ import { getAllExams } from './storage.js';
 
 let allExams = [];   // 👈 thêm dòng này
 
-document.addEventListener("DOMContentLoaded", async () => {
-    try {
-        const data = await getAllExams();
-        console.log("API response:", data);
-        console.log("Is array?", Array.isArray(data));
-
-        allExams = Array.isArray(data) ? data : [];
-        renderCourses();
-    } catch (error) {
-        console.error("Failed to load exams:", error);
-        allExams = [];
-        renderCourses();
-    }
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-    const courseList = document.getElementById('course-list');
-    const filterBtns = document.querySelectorAll('.filter-btn');
-    
-    if (!courseList) return;
-
-    // Lấy toàn bộ dữ liệu từ storage
-    const allExams = getAllExams();
-
-    // Hàm render danh sách bài thi dựa trên bộ lọc
+// Hàm render danh sách bài thi dựa trên bộ lọc
     function renderCourses(filterValue = 'all') {
         courseList.innerHTML = '';
         
@@ -69,6 +45,32 @@ document.addEventListener('DOMContentLoaded', () => {
             courseList.appendChild(card);
         });
     }
+
+document.addEventListener("DOMContentLoaded", async () => {
+    try {
+        const data = await getAllExams();
+        console.log("API response:", data);
+        console.log("Is array?", Array.isArray(data));
+
+        allExams = Array.isArray(data) ? data : [];
+        renderCourses();
+    } catch (error) {
+        console.error("Failed to load exams:", error);
+        allExams = [];
+        renderCourses();
+    }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const courseList = document.getElementById('course-list');
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    
+    if (!courseList) return;
+
+    // Lấy toàn bộ dữ liệu từ storage
+    const allExams = getAllExams();
+
+    
 
     // Gắn sự kiện click cho từng nút Category Filter
     filterBtns.forEach(btn => {
