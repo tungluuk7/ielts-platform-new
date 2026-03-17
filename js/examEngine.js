@@ -15,14 +15,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (!examId) {
         alert("Không tìm thấy ID đề thi hợp lệ.");
-        window.location.href = '../index.html';
+        window.location.href = '../student/index.html';
         return;
     }
 
     const examData = await getExamById(examId);
     if (!examData) {
         alert("Đề thi không tồn tại trong hệ thống.");
-        window.location.href = '../index.html';
+        window.location.href = '../student/index.html';
         return;
     }
 
@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             exitBtn.textContent = "Quay lại Full Test";
             exitBtn.onclick = (e) => {
                 e.preventDefault();
-                window.location.href = `../student/exam.html?id=${backToId}`;
+                window.location.href = `../student/index.html?id=${backToId}`;
             };
         }
     }
