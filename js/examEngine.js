@@ -233,7 +233,7 @@ async function submitExam() {
     
     const btnSubmit = document.getElementById('btn-submit-exam');
     const urlParams = new URLSearchParams(window.location.search);
-    const examData = getExamById(urlParams.get('id')); 
+    const examData = await getExamById(urlParams.get('id')); 
     if(!examData) return;
 
     // Khóa toàn bộ input
