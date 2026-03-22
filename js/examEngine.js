@@ -177,7 +177,7 @@ async function gradeWritingWithAI(promptText, essayText, apiKey) {
     const cleanApiKey = apiKey.trim();
     
     // 2. Dùng model mới nhất của Google
-   const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${cleanApiKey}`;
+   const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=${cleanApiKey}`;
     
     const systemInstruction = `
         You are an expert IELTS examiner. Grade the following essay based on the prompt.
