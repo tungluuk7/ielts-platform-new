@@ -1,6 +1,29 @@
 // js/admin.js
 import { getAllExams, saveExam, deleteExam } from './storage.js';
 
+// Hàm hỗ trợ upload file
+async function uploadFile(fileInput) {
+    if (!fileInput || !fileInput.files || fileInput.files.length === 0) return null;
+    
+    const file = fileInput.files[0];
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+        // Đổi domain phù hợp nếu bạn đang chạy local (vd: http://localhost:5000/api/upload)
+        const API_URL = "https://ielts-platform-new.onrender.com/api"; 
+        const res = await fetch(`${API_URL}/upload`, {
+            method: "POST",
+            body: formData
+        });
+        const data = await res.json();
+        return data.url; // Trả về dạng /uploads/ten-file.png
+    } catch (err) {
+        console.error("Lỗi upload file:", err);
+        return null;
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const listContainer = document.getElementById('admin-exam-list');
     const builderForm = document.getElementById('exam-builder-form');
@@ -153,21 +176,25 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
 
     const getSectionHTML = (secId) => `
-        <div class="builder-card section-card">
-            <div class="builder-card-header">
-                <span style="color: var(--primary-color);">Section / Passage ${secId}</span>
-                <button type="button" class="btn-remove remove-node">Xóa Section</button>
-            </div>
-            <div class="builder-form-group">
-                <input type="text" class="builder-input sec-title" placeholder="Tiêu đề Section" required>
-            </div>
-            <div class="builder-form-group">
-                <textarea class="builder-input sec-content" rows="4" placeholder="Ngữ liệu bài đọc / Đề bài Writing (Nhấn Enter để xuống dòng)"></textarea>
-            </div>
-            <div class="groups-container"></div>
-            <button type="button" class="btn btn-secondary btn-add-group" style="font-size: 14px;">+ Thêm Nhóm Câu Hỏi</button>
+    <div class="builder-card section-card">
+        <div class="builder-card-header">
+            <span style="color: var(--primary-color);">Section / Passage ${secId}</span>
+            <button type="button" class="btn-remove remove-node">Xóa Section</button>
         </div>
-    `;
+        <div class="builder-form-group">
+            <input type="text" class="builder-input sec-title" placeholder="Tiêu đề Section" required>
+        </div>
+        <div class="builder-form-group">
+            <label style="font-size: 13px; color: var(--text-muted);">Hình ảnh đính kèm (Biểu đồ Writing Task 1, v.v):</label>
+            <input type="file" class="builder-input sec-image" accept="image/*">
+        </div>
+        <div class="builder-form-group">
+            <textarea class="builder-input sec-content" rows="4" placeholder="Ngữ liệu bài đọc / Đề bài Writing (Nhấn Enter để xuống dòng)"></textarea>
+        </div>
+        <div class="groups-container"></div>
+        <button type="button" class="btn btn-secondary btn-add-group" style="font-size: 14px;">+ Thêm Nhóm Câu Hỏi</button>
+    </div>
+`;
 
     let sectionCounter = 0;
     
@@ -200,79 +227,67 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     builderForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const examObj = {
-            id: 'exam_' + new Date().getTime(),
-            title: document.getElementById('b-title').value.trim(),
-            skill: document.getElementById('b-skill').value,
-            duration: parseInt(document.getElementById('b-duration').value) * 60,
-            audioUrl: document.getElementById('b-audio').value.trim() || undefined,
-            sections: []
+    e.preventDefault();
+    
+    // Đổi text nút Submit để báo đang xử lý
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = "Đang tải file & lưu đề...";
+    submitBtn.disabled = true;
+
+    // 1. Upload Audio (Nếu có)
+    const audioInput = document.getElementById('b-audio-file');
+    const audioUrl = await uploadFile(audioInput);
+
+    const examObj = {
+        id: 'exam_' + new Date().getTime(),
+        title: document.getElementById('b-title').value.trim(),
+        skill: document.getElementById('b-skill').value,
+        duration: parseInt(document.getElementById('b-duration').value) * 60,
+        audioUrl: audioUrl || undefined, // Gắn URL thật vào đây
+        sections: []
+    };
+
+    // 2. Xử lý từng Section & Upload Hình ảnh (Nếu có)
+    const sectionNodes = sectionsContainer.querySelectorAll('.section-card');
+    for (let index = 0; index < sectionNodes.length; index++) {
+        const secNode = sectionNodes[index];
+        
+        // Gọi hàm upload ảnh cho section hiện tại
+        const imgInput = secNode.querySelector('.sec-image');
+        const imageUrl = await uploadFile(imgInput);
+
+        const sectionData = {
+            sectionId: index + 1,
+            title: secNode.querySelector('.sec-title').value.trim(),
+            content: secNode.querySelector('.sec-content').value.trim().replace(/\n/g, '<br>'),
+            imageUrl: imageUrl || undefined, // Gắn URL ảnh vào JSON
+            questionGroups: []
         };
 
-        sectionsContainer.querySelectorAll('.section-card').forEach((secNode, index) => {
-            const sectionData = {
-                sectionId: index + 1,
-                title: secNode.querySelector('.sec-title').value.trim(),
-                content: secNode.querySelector('.sec-content').value.trim().replace(/\n/g, '<br>'), // Hỗ trợ xuống dòng
-                questionGroups: []
-            };
-
-            secNode.querySelectorAll('.group-card').forEach(grpNode => {
-                const groupType = grpNode.querySelector('.grp-type').value;
-                // Xử lý xuống dòng cho Hướng dẫn
-                const rawInstruction = grpNode.querySelector('.grp-instruction').value.trim();
-                const formattedInstruction = rawInstruction.replace(/\n/g, '<br>');
-
-                const groupData = {
-                    type: groupType,
-                    instruction: formattedInstruction,
-                    questions: []
-                };
-
-                if (groupType === 'NOTES_COMPLETION') {
-                    // XỬ LÝ SMART PARSER ĐIỀN KHUYẾT ĐOẠN VĂN
-                    let rawNotes = grpNode.querySelector('.grp-notes-content').value.trim();
-                    let formattedNotes = rawNotes.replace(/\n/g, '<br>'); // Giữ nguyên định dạng xuống dòng
-
-                    // Thuật toán quét tìm cú pháp [số: đáp án]
-                    const regex = /\[(\d+):\s*([^\]]+)\]/g;
-                    formattedNotes = formattedNotes.replace(regex, (match, qNumStr, qAns) => {
-                        const qNum = parseInt(qNumStr);
-                        groupData.questions.push({ number: qNum, correctAnswer: qAns.trim() });
-                        return `[[${qNum}]]`; // Đặt cờ giữ chỗ để hiển thị ô input bên giao diện sinh viên
-                    });
-                    groupData.content = formattedNotes;
-                } else {
-                    // Logic cũ cho các câu hỏi rời
-                    grpNode.querySelectorAll('.question-card').forEach(qNode => {
-                        const qOptionsRaw = qNode.querySelector('.q-options').value.trim();
-                        const optionsArray = qOptionsRaw ? qOptionsRaw.split(',').map(s => s.trim()) : [];
-                        groupData.questions.push({
-                            questionId: 'q_' + new Date().getTime() + Math.floor(Math.random() * 1000),
-                            number: parseInt(qNode.querySelector('.q-num').value),
-                            text: qNode.querySelector('.q-text').value.trim(),
-                            options: optionsArray.length > 0 ? optionsArray : undefined,
-                            correctAnswer: qNode.querySelector('.q-correct').value.trim() || undefined
-                        });
-                    });
-                }
-
-                if (groupData.questions.length > 0) sectionData.questionGroups.push(groupData);
-            });
-            examObj.sections.push(sectionData);
-        });
-
-        if (examObj.sections.length === 0) return alert("Vui lòng thêm ít nhất 1 Section.");
+        // ... (Giữ nguyên toàn bộ logic loop qua groupCard và questions của bạn ở đây) ...
         
-        await saveExam(examObj);
-        alert("Đã khởi tạo và lưu đề thi thành công!");
-        builderForm.reset();
-        sectionsContainer.innerHTML = '';
-        sectionCounter = 0;
-        audioGroup.style.display = 'none';
-        await renderList();
-    });
+        examObj.sections.push(sectionData);
+    }
+
+    if (examObj.sections.length === 0) {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+        return alert("Vui lòng thêm ít nhất 1 Section.");
+    }
+    
+    await saveExam(examObj);
+    alert("Đã khởi tạo và lưu đề thi thành công!");
+    
+    // Reset form
+    builderForm.reset();
+    sectionsContainer.innerHTML = '';
+    sectionCounter = 0;
+    document.getElementById('b-audio-group').style.display = 'none';
+    submitBtn.textContent = originalText;
+    submitBtn.disabled = false;
+    await renderList();
+});
 
 
     renderList();
