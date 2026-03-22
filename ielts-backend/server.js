@@ -131,27 +131,16 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-/* ===== API CHẤM ĐIỂM WRITING BẰNG GEMINI SDK (BẢN TỐI ƯU) ===== */
+/* ===== API CHẤM ĐIỂM WRITING (DÙNG FETCH THUẦN - BẢN ỔN ĐỊNH V1) ===== */
 app.post("/api/grade-writing", async (req, res) => {
   try {
     const { essay, taskType, apiKey } = req.body;
 
-    // 1. Dọn dẹp Key: Xóa khoảng trắng thừa (trim) để tránh lỗi do copy-paste nhầm
+    // 1. Dọn dẹp Key
     const keyToUse = (apiKey || process.env.GEMINI_API_KEY || "").trim();
-    
     if (!keyToUse) {
         return res.status(400).json({ error: "Thiếu API Key" });
     }
-
-    const genAI = new GoogleGenerativeAI(keyToUse);
-    
-    // 2. TÍNH NĂNG MỚI: Bật chế độ responseMimeType ép AI trả về chuẩn JSON 100%
-    const model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-pro", // Đổi chữ flash thành pro là xong!
-        generationConfig: {
-            responseMimeType: "application/json",
-        }
-    });
 
     const prompt = `
         You are an expert IELTS examiner. Grade the following essay based on the prompt.
@@ -160,7 +149,7 @@ app.post("/api/grade-writing", async (req, res) => {
         Prompt: """${taskType}"""
         Student's Essay: """${essay}"""
         
-        Return EXACTLY this JSON structure:
+        Return EXACTLY this JSON structure. Do not return any markdown or extra text:
         {
             "overall": 6.5,
             "ta": 6.0,
@@ -171,15 +160,36 @@ app.post("/api/grade-writing", async (req, res) => {
         }
     `;
 
-    const result = await model.generateContent(prompt);
-    const responseText = result.response.text();
+    // 2. GỌI TRỰC TIẾP VÀO ĐƯỜNG DẪN v1 (Bỏ qua v1beta của SDK)
+    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${keyToUse}`;
+    
+    // 3. Ép AI trả về JSON bằng generationConfig
+    const payload = {
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+            responseMimeType: "application/json"
+        }
+    };
 
-    // Vì đã cấu hình responseMimeType, kết quả chắc chắn là JSON string hợp lệ
+    const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+        const errData = await response.text();
+        throw new Error(`Google API v1 Error: ${response.status} - ${errData}`);
+    }
+
+    const data = await response.json();
+    const responseText = data.candidates[0].content.parts[0].text;
+
+    // Trả JSON thẳng về Frontend
     res.json(JSON.parse(responseText));
 
   } catch (error) {
-    console.error("🔥 Lỗi chấm bài AI:", error);
-    // Trả mã 500 kèm chi tiết lỗi để Frontend dễ hiển thị
+    console.error("🔥 Lỗi chấm bài AI (Fetch):", error);
     res.status(500).json({ error: "Lỗi hệ thống khi chấm điểm", details: error.message });
   }
 });
