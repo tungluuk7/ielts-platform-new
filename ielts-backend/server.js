@@ -131,31 +131,36 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-/* ===== API CHẤM ĐIỂM WRITING BẰNG GEMINI SDK ===== */
+/* ===== API CHẤM ĐIỂM WRITING BẰNG GEMINI SDK (BẢN TỐI ƯU) ===== */
 app.post("/api/grade-writing", async (req, res) => {
   try {
     const { essay, taskType, apiKey } = req.body;
 
-    // Ưu tiên dùng Key do Admin nhập từ Frontend, nếu không có thì dùng Key ở file .env
-    const keyToUse = apiKey || process.env.GEMINI_API_KEY;
+    // 1. Dọn dẹp Key: Xóa khoảng trắng thừa (trim) để tránh lỗi do copy-paste nhầm
+    const keyToUse = (apiKey || process.env.GEMINI_API_KEY || "").trim();
     
     if (!keyToUse) {
         return res.status(400).json({ error: "Thiếu API Key" });
     }
 
-    // Khởi tạo SDK
     const genAI = new GoogleGenerativeAI(keyToUse);
-    // Sử dụng model phổ biến, nhanh và ổn định nhất hiện tại
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    
+    // 2. TÍNH NĂNG MỚI: Bật chế độ responseMimeType ép AI trả về chuẩn JSON 100%
+    const model = genAI.getGenerativeModel({ 
+        model: "gemini-1.5-flash",
+        generationConfig: {
+            responseMimeType: "application/json",
+        }
+    });
 
     const prompt = `
         You are an expert IELTS examiner. Grade the following essay based on the prompt.
-        Evaluate strictly according to IELTS criteria: Task Achievement (TA), Cohesion & Coherence (CC), Lexical Resource (LR), and Grammatical Range & Accuracy (GRA).
+        Evaluate strictly according to IELTS criteria: Task Achievement, Cohesion & Coherence, Lexical Resource, and Grammatical Range & Accuracy.
         
         Prompt: """${taskType}"""
         Student's Essay: """${essay}"""
         
-        You MUST return ONLY a valid JSON object with the following exact structure. Do not include any markdown formatting like \`\`\`json. Return pure JSON only:
+        Return EXACTLY this JSON structure:
         {
             "overall": 6.5,
             "ta": 6.0,
@@ -166,23 +171,15 @@ app.post("/api/grade-writing", async (req, res) => {
         }
     `;
 
-    // Gọi AI sinh nội dung
     const result = await model.generateContent(prompt);
-    const response = await result.response;
-    let text = response.text();
+    const responseText = result.response.text();
 
-    // Làm sạch dữ liệu trước khi parse JSON
-    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    
-    if (jsonMatch) {
-        res.json(JSON.parse(jsonMatch[0])); // Trả JSON thẳng về Frontend
-    } else {
-        throw new Error("AI không trả về định dạng JSON hợp lệ");
-    }
+    // Vì đã cấu hình responseMimeType, kết quả chắc chắn là JSON string hợp lệ
+    res.json(JSON.parse(responseText));
 
   } catch (error) {
     console.error("🔥 Lỗi chấm bài AI:", error);
-    res.status(500).json({ error: "Lỗi khi chấm điểm", details: error.message });
+    // Trả mã 500 kèm chi tiết lỗi để Frontend dễ hiển thị
+    res.status(500).json({ error: "Lỗi hệ thống khi chấm điểm", details: error.message });
   }
 });
