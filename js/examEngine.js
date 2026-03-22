@@ -171,55 +171,30 @@ export function updatePaletteStatus(questionNumber, status) {
     }
 }
 
-// --- Bổ sung hàm phụ gọi API AI (Đã sửa lỗi 404 & bọc lỗi an toàn) ---
+// --- Hàm phụ gọi API AI (Gọi qua Backend an toàn 100%) ---
 async function gradeWritingWithAI(promptText, essayText, apiKey) {
-    // 1. Dọn dẹp API Key (Xóa khoảng trắng/xuống dòng thừa nếu có do copy/paste)
-    const cleanApiKey = apiKey.trim();
+    // Đổi URL này trỏ về đúng Backend đang chạy trên Render của bạn
+    const API_URL = "https://ielts-platform-new.onrender.com/api/grade-writing"; 
     
-    // 2. Dùng model mới nhất của Google
-   const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=${cleanApiKey}`;
-    
-    const systemInstruction = `
-        You are an expert IELTS examiner. Grade the following essay based on the prompt.
-        Evaluate strictly according to IELTS criteria: Task Achievement (TA), Cohesion & Coherence (CC), Lexical Resource (LR), and Grammatical Range & Accuracy (GRA).
-        
-        Prompt: """${promptText}"""
-        Student's Essay: """${essayText}"""
-        
-        You MUST return ONLY a valid JSON object with the following exact structure. Do not include any markdown formatting like \`\`\`json. Return pure JSON only:
-        {
-            "overall": 6.5,
-            "ta": 6.0,
-            "cc": 6.5,
-            "lr": 7.0,
-            "gra": 6.5,
-            "feedback": "Write detailed feedback here..."
-        }
-    `;
-
-    const payload = { contents: [{ parts: [{ text: systemInstruction }] }] };
-
     try {
-        const response = await fetch(url, {
+        const response = await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({
+                taskType: promptText,
+                essay: essayText,
+                apiKey: apiKey // Đẩy key Admin đã nhập lên Backend xử lý
+            })
         });
 
         if (!response.ok) {
-            console.error("API Error Details:", await response.text());
-            throw new Error(`Lỗi kết nối API: Mã ${response.status}`);
+            const errorData = await response.json();
+            throw new Error(errorData.error || `Lỗi server: ${response.status}`);
         }
         
+        // Backend đã xử lý JSON sạch sẽ, chỉ việc nhận và dùng
         const data = await response.json();
-        let responseText = data.candidates[0].content.parts[0].text;
-
-        // Làm sạch dữ liệu trước khi parse JSON (Đề phòng AI tự chèn markdown)
-        responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-        
-        if (jsonMatch) return JSON.parse(jsonMatch[0]);
-        throw new Error('AI không trả về định dạng JSON');
+        return data; 
 
     } catch (error) {
         console.error("AI Evaluation Catch Error:", error);

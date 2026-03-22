@@ -131,51 +131,58 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+/* ===== API CHẤM ĐIỂM WRITING BẰNG GEMINI SDK ===== */
 app.post("/api/grade-writing", async (req, res) => {
   try {
-    const { essay, taskType } = req.body;
+    const { essay, taskType, apiKey } = req.body;
+
+    // Ưu tiên dùng Key do Admin nhập từ Frontend, nếu không có thì dùng Key ở file .env
+    const keyToUse = apiKey || process.env.GEMINI_API_KEY;
+    
+    if (!keyToUse) {
+        return res.status(400).json({ error: "Thiếu API Key" });
+    }
+
+    // Khởi tạo SDK
+    const genAI = new GoogleGenerativeAI(keyToUse);
+    // Sử dụng model phổ biến, nhanh và ổn định nhất hiện tại
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const prompt = `
-You are an IELTS Writing examiner.
+        You are an expert IELTS examiner. Grade the following essay based on the prompt.
+        Evaluate strictly according to IELTS criteria: Task Achievement (TA), Cohesion & Coherence (CC), Lexical Resource (LR), and Grammatical Range & Accuracy (GRA).
+        
+        Prompt: """${taskType}"""
+        Student's Essay: """${essay}"""
+        
+        You MUST return ONLY a valid JSON object with the following exact structure. Do not include any markdown formatting like \`\`\`json. Return pure JSON only:
+        {
+            "overall": 6.5,
+            "ta": 6.0,
+            "cc": 6.5,
+            "lr": 7.0,
+            "gra": 6.5,
+            "feedback": "Write detailed feedback here..."
+        }
+    `;
 
-Evaluate the following IELTS ${taskType} essay.
+    // Gọi AI sinh nội dung
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    let text = response.text();
 
-Give:
-- Overall Band Score
-- Task Response
-- Coherence & Cohesion
-- Lexical Resource
-- Grammatical Range & Accuracy
-- Detailed feedback
-
-Essay:
-${essay}
-`;
-
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [{ text: prompt }]
-            }
-          ]
-        })
-      }
-    );
-
-    const data = await response.json();
-
-    const result =
-      data.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
-
-    res.json({ result });
+    // Làm sạch dữ liệu trước khi parse JSON
+    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    
+    if (jsonMatch) {
+        res.json(JSON.parse(jsonMatch[0])); // Trả JSON thẳng về Frontend
+    } else {
+        throw new Error("AI không trả về định dạng JSON hợp lệ");
+    }
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Grading failed" });
+    console.error("🔥 Lỗi chấm bài AI:", error);
+    res.status(500).json({ error: "Lỗi khi chấm điểm", details: error.message });
   }
 });
