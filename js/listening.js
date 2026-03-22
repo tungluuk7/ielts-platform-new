@@ -39,6 +39,9 @@ export function renderListening(examData, materialPane, questionsPane, onAnswerU
                 <h2 style="border-bottom: 2px solid var(--primary-color); padding-bottom: 10px; margin-bottom: 20px; color: var(--primary-color);">
                     ${section.title}
                 </h2>
+                
+                ${section.content ? `<div class="passage-text" style="margin-bottom: 20px;">${section.content}</div>` : ''}
+                ${section.imageUrl ? `<div style="margin-bottom: 20px;"><img src="${section.imageUrl}" alt="Listening Image" style="max-width: 100%; border-radius: var(--radius); border: 1px solid var(--border-color);"></div>` : ''}
         `;
 
         section.questionGroups.forEach(group => {
