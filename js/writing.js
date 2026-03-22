@@ -10,7 +10,8 @@ export function renderWriting(examData, materialPane, questionsPane, onAnswerUpd
 
     function render() {
         const section = examData.sections[currentTaskIndex];
-
+// Thêm dòng này để kiểm tra dữ liệu thực tế
+        console.log("Dữ liệu section hiện tại:", section);
         // 1. Render Cột trái (Đề bài & Hình ảnh biểu đồ nếu có)
         materialPane.innerHTML = `
             <div class="passage-tabs">
