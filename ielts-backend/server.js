@@ -5,7 +5,7 @@ import mongoose from "mongoose";
 import Exam from "./models/Exam.js";
 import { v2 as cloudinary } from "cloudinary";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
-
+import multer from "multer";
 dotenv.config();
 
 const app = express();
