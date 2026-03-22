@@ -147,7 +147,7 @@ app.post("/api/grade-writing", async (req, res) => {
     
     // 2. TÍNH NĂNG MỚI: Bật chế độ responseMimeType ép AI trả về chuẩn JSON 100%
     const model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-flash",
+        model: "gemini-1.5-pro", // Đổi chữ flash thành pro là xong!
         generationConfig: {
             responseMimeType: "application/json",
         }
