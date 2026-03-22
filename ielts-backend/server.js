@@ -163,12 +163,9 @@ app.post("/api/grade-writing", async (req, res) => {
     // 2. GỌI TRỰC TIẾP VÀO ĐƯỜNG DẪN v1 (Bỏ qua v1beta của SDK)
     const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${keyToUse}`;
     
-    // 3. Ép AI trả về JSON bằng generationConfig
+    // 3. Bỏ generationConfig đi, chỉ gửi nội dung prompt thôi
     const payload = {
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-            responseMimeType: "application/json"
-        }
+        contents: [{ parts: [{ text: prompt }] }]
     };
 
     const response = await fetch(url, {
@@ -183,10 +180,21 @@ app.post("/api/grade-writing", async (req, res) => {
     }
 
     const data = await response.json();
-    const responseText = data.candidates[0].content.parts[0].text;
+    let responseText = data.candidates[0].content.parts[0].text;
 
-    // Trả JSON thẳng về Frontend
-    res.json(JSON.parse(responseText));
+    // 4. BƯỚC QUAN TRỌNG: Làm sạch dữ liệu thủ công
+    // Đề phòng AI lanh chanh tự bọc thêm ```json ... ``` vào kết quả
+    responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+    
+    // Dùng Regex để "móc" chính xác phần ngoặc nhọn JSON ra
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    
+    if (jsonMatch) {
+        // Trả JSON thẳng về Frontend
+        res.json(JSON.parse(jsonMatch[0]));
+    } else {
+        throw new Error("AI không chịu trả về định dạng JSON");
+    }
 
   } catch (error) {
     console.error("🔥 Lỗi chấm bài AI (Fetch):", error);
