@@ -3,6 +3,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import Exam from "./models/Exam.js";
+import { v2 as cloudinary } from "cloudinary";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
 
 dotenv.config();
 
@@ -14,43 +16,34 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-import multer from "multer";
-import path from "path";
-import fs from "fs";
-import { fileURLToPath } from "url";
+// 2. Cấu hình thông tin Cloudinary (Thay bằng thông tin thật của bạn)
+// Khuyên dùng: Nên đưa 3 biến này vào file .env trên máy và trên Render
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
-// Lấy thư mục gốc (Fix cho ES Module)
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Tạo thư mục uploads nếu chưa có
-const uploadDir = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
-}
-
-// Cấu hình Multer để lưu file
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => {
-    // Tạo tên file duy nhất tránh trùng lặp
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + "-" + file.originalname);
+// 3. Cấu hình Storage đẩy thẳng lên Cloudinary
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "ielts_platform_uploads", // Tên thư mục sẽ tạo trên Cloudinary
+    allowed_formats: ["jpg", "png", "jpeg", "webp", "mp3", "wav", "mpeg"], // Hỗ trợ cả ảnh và audio
+    resource_type: "auto" // Tự động nhận diện ảnh hay audio
   },
 });
-const upload = multer({ storage });
 
-// Mở public thư mục uploads để Frontend xem được ảnh/audio
-app.use("/uploads", express.static(uploadDir));
+const upload = multer({ storage: storage });
 
-// API Upload File
+// 4. API Upload (Đã sửa đổi)
 app.post("/api/upload", upload.single("file"), (req, res) => {
   if (!req.file) return res.status(400).json({ error: "Không có file nào được tải lên" });
   
-  // Trả về đường dẫn của file vừa lưu
-  // Ví dụ: /uploads/17099...-chart.png
-  res.json({ url: `/uploads/${req.file.filename}` }); 
+  // Lúc này, req.file.path chính là cái URL tuyệt đối từ Cloudinary (https://res.cloudinary...)
+  res.json({ url: req.file.path }); 
 });
+
 
 /* ==============================
    CONNECT DATABASE
