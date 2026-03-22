@@ -226,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    builderForm.addEventListener('submit', async (e) => {
+builderForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     // Đổi text nút Submit để báo đang xử lý
@@ -244,16 +244,15 @@ document.addEventListener('DOMContentLoaded', () => {
         title: document.getElementById('b-title').value.trim(),
         skill: document.getElementById('b-skill').value,
         duration: parseInt(document.getElementById('b-duration').value) * 60,
-        audioUrl: audioUrl || undefined, // Gắn URL thật vào đây
+        audioUrl: audioUrl || undefined,
         sections: []
     };
 
-    // 2. Xử lý từng Section & Upload Hình ảnh (Nếu có)
+    // 2. Xử lý từng Section & Upload Hình ảnh
     const sectionNodes = sectionsContainer.querySelectorAll('.section-card');
     for (let index = 0; index < sectionNodes.length; index++) {
         const secNode = sectionNodes[index];
         
-        // Gọi hàm upload ảnh cho section hiện tại
         const imgInput = secNode.querySelector('.sec-image');
         const imageUrl = await uploadFile(imgInput);
 
@@ -261,12 +260,50 @@ document.addEventListener('DOMContentLoaded', () => {
             sectionId: index + 1,
             title: secNode.querySelector('.sec-title').value.trim(),
             content: secNode.querySelector('.sec-content').value.trim().replace(/\n/g, '<br>'),
-            imageUrl: imageUrl || undefined, // Gắn URL ảnh vào JSON
+            imageUrl: imageUrl || undefined,
             questionGroups: []
         };
 
-        // ... (Giữ nguyên toàn bộ logic loop qua groupCard và questions của bạn ở đây) ...
-        
+        // --- ĐOẠN LOGIC LẤY CÂU HỎI BỊ THIẾU ĐÃ ĐƯỢC THÊM LẠI ---
+        secNode.querySelectorAll('.group-card').forEach(grpNode => {
+            const groupType = grpNode.querySelector('.grp-type').value;
+            const rawInstruction = grpNode.querySelector('.grp-instruction').value.trim();
+            const formattedInstruction = rawInstruction.replace(/\n/g, '<br>');
+
+            const groupData = {
+                type: groupType,
+                instruction: formattedInstruction,
+                questions: []
+            };
+
+            if (groupType === 'NOTES_COMPLETION') {
+                let rawNotes = grpNode.querySelector('.grp-notes-content').value.trim();
+                let formattedNotes = rawNotes.replace(/\n/g, '<br>');
+                const regex = /\[(\d+):\s*([^\]]+)\]/g;
+                formattedNotes = formattedNotes.replace(regex, (match, qNumStr, qAns) => {
+                    const qNum = parseInt(qNumStr);
+                    groupData.questions.push({ number: qNum, correctAnswer: qAns.trim() });
+                    return `[[${qNum}]]`;
+                });
+                groupData.content = formattedNotes;
+            } else {
+                grpNode.querySelectorAll('.question-card').forEach(qNode => {
+                    const qOptionsRaw = qNode.querySelector('.q-options').value.trim();
+                    const optionsArray = qOptionsRaw ? qOptionsRaw.split(',').map(s => s.trim()) : [];
+                    groupData.questions.push({
+                        questionId: 'q_' + new Date().getTime() + Math.floor(Math.random() * 1000),
+                        number: parseInt(qNode.querySelector('.q-num').value),
+                        text: qNode.querySelector('.q-text').value.trim(),
+                        options: optionsArray.length > 0 ? optionsArray : undefined,
+                        correctAnswer: qNode.querySelector('.q-correct').value.trim() || undefined
+                    });
+                });
+            }
+
+            if (groupData.questions.length > 0) sectionData.questionGroups.push(groupData);
+        });
+        // -------------------------------------------------------
+
         examObj.sections.push(sectionData);
     }
 
