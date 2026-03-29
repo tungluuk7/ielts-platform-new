@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <input type="text" class="builder-input q-options" placeholder="Các đáp án nhiễu/đúng, cách nhau bởi dấu phẩy (Dành cho Trắc nghiệm/TFNG)">
             </div>
             <div class="builder-form-group" style="margin-bottom: 0;">
-                <input type="text" class="builder-input q-correct" placeholder="Đáp án đúng chính xác">
+                <input type="text" class="builder-input q-correct" placeholder="Đáp án đúng (Dùng ~/ để ngăn nhiều biến thể. VD: A ~/ B)">
             </div>
         </div>
     `;

@@ -250,8 +250,13 @@ async function submitExam() {
                 group.questions.forEach(q => {
                     totalQuestions++;
                     const studentAnswer = (window.examAnswerSheet[q.number] || '').toString().trim().toLowerCase();
-                    const correctAnswer = (q.correctAnswer || '').toString().trim().toLowerCase();
-                    if (studentAnswer === correctAnswer && correctAnswer !== '') {
+                    const rawCorrectAnswer = (q.correctAnswer || '').toString().trim().toLowerCase();
+                    
+                    // TÁCH MẢNG ĐÁP ÁN BẰNG ~/
+                    const acceptedAnswers = rawCorrectAnswer.split('~/').map(ans => ans.trim()).filter(ans => ans !== '');
+                    
+                    // NẾU CÂU TRẢ LỜI CỦA HS NẰM TRONG MẢNG CHẤP NHẬN ĐƯỢC -> CỘNG ĐIỂM
+                    if (acceptedAnswers.includes(studentAnswer) && acceptedAnswers.length > 0) {
                         correctAnswersCount++;
                     }
                 });
@@ -367,39 +372,42 @@ async function submitExam() {
 function drawGradingUI() {
     if (!window.currentExamData) return;
 
-    disableAllInputs(); // Khóa input lại để người dùng không chỉnh sửa được ở tab mới
+    disableAllInputs(); // Khóa input
 
     window.currentExamData.sections.forEach(section => {
         section.questionGroups.forEach(group => {
             group.questions.forEach(q => {
-                // Kiểm tra xem câu hỏi này có đang hiển thị trên màn hình không
                 const qElement = document.getElementById(`question-${q.number}`);
-                if (!qElement) return; // Nếu không có thì bỏ qua (Nằm ở tab khác)
+                if (!qElement) return; 
 
-                // Dọn dẹp HTML chấm điểm cũ để tránh in đè khi người dùng click lại tab cũ
                 qElement.querySelectorAll('.result-text, .correct-answer-show').forEach(el => el.remove());
 
                 const studentAnswer = (window.examAnswerSheet[q.number] || '').toString().trim().toLowerCase();
-                const correctAnswer = (q.correctAnswer || '').toString().trim().toLowerCase();
-                let isCorrect = (studentAnswer === correctAnswer && correctAnswer !== '');
+                const rawCorrectAnswer = (q.correctAnswer || '').toString().trim().toLowerCase();
+                
+                // TÁCH MẢNG ĐÁP ÁN
+                const acceptedAnswers = rawCorrectAnswer.split('~/').map(ans => ans.trim()).filter(ans => ans !== '');
+                let isCorrect = acceptedAnswers.includes(studentAnswer) && acceptedAnswers.length > 0;
 
-                // Tạo thẻ in ✔ Đúng / ✘ Sai
+                // Chuỗi hiển thị đáp án đẹp mắt (thay ~/ bằng chữ "hoặc")
+                const displayCorrectAnswer = q.correctAnswer ? q.correctAnswer.split('~/').map(a => a.trim()).join(' hoặc ') : '';
+
                 const resultSpan = document.createElement('span');
                 resultSpan.className = isCorrect ? 'result-text result-correct' : 'result-text result-wrong';
                 resultSpan.textContent = isCorrect ? '✔ Đúng' : '✘ Sai';
 
-                // Bơm thẻ vào đúng giao diện từng dạng bài
                 if (group.type === 'NOTES_COMPLETION' || group.type === 'GAP_FILL') {
                     const inputEl = document.querySelector(`input[name="q_${q.number}"]`);
                     if (inputEl) {
                         inputEl.insertAdjacentElement('afterend', resultSpan);
                         if (!isCorrect && q.correctAnswer) {
                             const correctSpan = document.createElement('span');
-                            correctSpan.className = 'correct-answer-show'; // Gắn class để dễ dọn dẹp
+                            correctSpan.className = 'correct-answer-show'; 
                             correctSpan.style.color = '#166534';
                             correctSpan.style.fontWeight = 'bold';
                             correctSpan.style.marginLeft = '8px';
-                            correctSpan.textContent = `(Đáp án: ${q.correctAnswer})`;
+                            // Hiển thị biến thể thân thiện
+                            correctSpan.textContent = `(Đáp án: ${displayCorrectAnswer})`; 
                             inputEl.insertAdjacentElement('afterend', correctSpan);
                         }
                     }
@@ -409,7 +417,7 @@ function drawGradingUI() {
                         const correctSpan = document.createElement('div');
                         correctSpan.className = 'correct-answer-show';
                         correctSpan.style.marginTop = '5px';
-                        correctSpan.textContent = `Nối đúng: ${q.correctAnswer}`;
+                        correctSpan.textContent = `Nối đúng: ${displayCorrectAnswer}`;
                         qElement.appendChild(correctSpan);
                     }
                 } else {
@@ -418,7 +426,8 @@ function drawGradingUI() {
                     if (q.correctAnswer) {
                         const radios = qElement.querySelectorAll(`input[type="radio"]`);
                         radios.forEach(radio => {
-                            if (radio.value.trim().toLowerCase() === correctAnswer) {
+                            // Highlight NẾU radio thuộc MỘT TRONG CÁC biến thể đáp án đúng
+                            if (acceptedAnswers.includes(radio.value.trim().toLowerCase())) {
                                 radio.parentElement.style.backgroundColor = '#dcfce7';
                                 radio.parentElement.style.border = '1px solid #22c55e';
                                 radio.parentElement.style.borderRadius = '4px';
