@@ -202,7 +202,26 @@ async function gradeWritingWithAI(promptText, essayText, apiKey) {
     }
 }
 
-// --- Cập nhật hàm submitExam ---
+// --- THÊM 2 BIẾN TOÀN CỤC ĐỂ LƯU TRẠNG THÁI ---
+window.isExamSubmitted = false;
+window.currentExamData = null;
+
+// Lắng nghe sự kiện chuyển tab từ reading.js
+document.addEventListener('examTabChanged', () => {
+    if (window.isExamSubmitted) {
+        drawGradingUI(); // Vẽ lại đáp án cho Tab mới
+    }
+});
+
+// Hàm khóa input dùng chung
+function disableAllInputs() {
+    document.querySelectorAll('input, textarea, .match-item').forEach(el => {
+        el.style.pointerEvents = 'none';
+        if(el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.disabled = true;
+    });
+}
+
+// --- CẬP NHẬT HÀM SUBMIT EXAM ---
 async function submitExam() {
     if (window.examTimerInterval) clearInterval(window.examTimerInterval);
     
@@ -211,13 +230,12 @@ async function submitExam() {
     const examData = await getExamById(urlParams.get('id')); 
     if(!examData) return;
 
-    // Khóa toàn bộ input
-    document.querySelectorAll('input, textarea, .match-item').forEach(el => {
-        el.style.pointerEvents = 'none';
-        if(el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.disabled = true;
-    });
+    // Lưu trạng thái nộp bài
+    window.isExamSubmitted = true;
+    window.currentExamData = examData;
+    disableAllInputs();
 
-    // 1. CHẤM BÀI READING & LISTENING (Giữ nguyên logic cũ)
+    // 1. CHẤM BÀI READING & LISTENING
     if (examData.skill === 'reading' || examData.skill === 'listening') {
         btnSubmit.disabled = true;
         btnSubmit.textContent = "Đã nộp bài";
@@ -226,71 +244,31 @@ async function submitExam() {
         let totalQuestions = 0;
         let correctAnswersCount = 0;
 
+        // BƯỚC A: TÍNH ĐIỂM TRƯỚC (Quét toàn bộ json, không phụ thuộc vào giao diện)
         examData.sections.forEach(section => {
             section.questionGroups.forEach(group => {
                 group.questions.forEach(q => {
                     totalQuestions++;
                     const studentAnswer = (window.examAnswerSheet[q.number] || '').toString().trim().toLowerCase();
                     const correctAnswer = (q.correctAnswer || '').toString().trim().toLowerCase();
-                    const qElement = document.getElementById(`question-${q.number}`);
-                    let isCorrect = (studentAnswer === correctAnswer && correctAnswer !== '');
-                    if (isCorrect) correctAnswersCount++;
-
-                    if (qElement) {
-                        const resultSpan = document.createElement('span');
-                        resultSpan.className = isCorrect ? 'result-text result-correct' : 'result-text result-wrong';
-                        resultSpan.textContent = isCorrect ? '✔ Đúng' : '✘ Sai';
-
-                        if (group.type === 'NOTES_COMPLETION' || group.type === 'GAP_FILL') {
-                            const inputEl = document.querySelector(`input[name="q_${q.number}"]`);
-                            if (inputEl) {
-                                inputEl.insertAdjacentElement('afterend', resultSpan);
-                                if (!isCorrect && q.correctAnswer) {
-                                    const correctSpan = document.createElement('span');
-                                    correctSpan.style.color = '#166534';
-                                    correctSpan.style.fontWeight = 'bold';
-                                    correctSpan.style.marginLeft = '8px';
-                                    correctSpan.textContent = `(Đáp án: ${q.correctAnswer})`;
-                                    inputEl.insertAdjacentElement('afterend', correctSpan);
-                                }
-                            }
-                        } else if (group.type === 'MATCHING') {
-                            qElement.appendChild(resultSpan);
-                            if (!isCorrect && q.correctAnswer) {
-                                const correctSpan = document.createElement('div');
-                                correctSpan.className = 'correct-answer-show';
-                                correctSpan.style.marginTop = '5px';
-                                correctSpan.textContent = `Nối đúng: ${q.correctAnswer}`;
-                                qElement.appendChild(correctSpan);
-                            }
-                        } else {
-                            const qText = qElement.querySelector('.question-text') || qElement;
-                            qText.appendChild(resultSpan);
-                            if (q.correctAnswer) {
-                                const radios = qElement.querySelectorAll(`input[type="radio"]`);
-                                radios.forEach(radio => {
-                                    if (radio.value.trim().toLowerCase() === correctAnswer) {
-                                        radio.parentElement.style.backgroundColor = '#dcfce7';
-                                        radio.parentElement.style.border = '1px solid #22c55e';
-                                        radio.parentElement.style.borderRadius = '4px';
-                                        radio.parentElement.style.padding = '4px 8px';
-                                        radio.parentElement.style.display = 'inline-block';
-                                    }
-                                });
-                            }
-                        }
+                    if (studentAnswer === correctAnswer && correctAnswer !== '') {
+                        correctAnswersCount++;
                     }
                 });
             });
         });
 
+        // Hiển thị điểm số lên góc trên cùng
         const titleEl = document.getElementById('exam-title');
         titleEl.innerHTML = `${examData.title} <span style="margin-left:20px; color:var(--success-color); font-weight:900; background:var(--bg-color); padding:4px 12px; border-radius:20px; border:2px solid var(--success-color);">Điểm: ${correctAnswersCount} / ${totalQuestions}</span>`;
+
+        // BƯỚC B: VẼ ĐÁP ÁN CHO TAB HIỆN TẠI
+        drawGradingUI();
     } 
     
-    // 2. CHẤM BÀI WRITING BẰNG AI
-    // 2. CHẤM BÀI WRITING BẰNG AI
+    // 2. CHẤM BÀI WRITING BẰNG AI (Phần này giữ nguyên của bạn)
     else if (examData.skill === 'writing') {
+        // ... (Bạn copy lại logic chấm AI cũ của bạn dán vào đây để không bị mất code nhé) ...
         const apiKey = localStorage.getItem('gemini_api_key');
         if (!apiKey) {
             btnSubmit.disabled = true;
@@ -303,13 +281,12 @@ async function submitExam() {
         btnSubmit.textContent = "AI đang chấm điểm...";
         btnSubmit.className = "btn btn-primary btn-grading";
 
-        // Khóa các tab bên trái để học viên không bấm làm mất kết quả
+        // Khóa các tab bên trái
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.style.pointerEvents = 'none';
             btn.style.opacity = '0.5';
         });
 
-        // Xóa sạch cột phải để tạo không gian cho Bảng điểm AI
         const rightPane = document.getElementById('exam-questions-pane');
         rightPane.innerHTML = `<h3 style="margin-bottom: 24px; color: #8b5cf6;">✨ Kết quả Đánh giá từ AI</h3>`;
 
@@ -317,7 +294,6 @@ async function submitExam() {
             const studentEssay = window.examAnswerSheet[`task_${section.sectionId}`] || "";
             const promptText = section.content.replace(/<[^>]*>?/gm, ''); 
 
-            // Tạo khung hiển thị lại bài làm của sinh viên cho từng Task
             const taskContainer = document.createElement('div');
             taskContainer.style.marginBottom = '40px';
             taskContainer.innerHTML = `
@@ -329,7 +305,6 @@ async function submitExam() {
             `;
             rightPane.appendChild(taskContainer);
 
-            // Kiểm tra độ dài bài viết
             if (!studentEssay || studentEssay.trim().split(/\s+/).length < 20) {
                 const errorCard = document.createElement('div');
                 errorCard.className = 'ai-feedback-card';
@@ -338,7 +313,6 @@ async function submitExam() {
                 continue;
             }
 
-            // Gọi API
             const evaluation = await gradeWritingWithAI(promptText, studentEssay, apiKey);
 
             if (evaluation) {
@@ -378,16 +352,83 @@ async function submitExam() {
             }
         }
 
-        // Hoàn tất
         btnSubmit.textContent = "Đã hoàn tất chấm điểm";
         btnSubmit.className = "btn btn-primary";
         btnSubmit.style.backgroundColor = "var(--success-color)";
     }
-    
-    // 3. SPEAKING
     else {
         btnSubmit.disabled = true;
         btnSubmit.textContent = "Đã nộp bài";
         alert("Bài thi Speaking đã được ghi nhận. Dạng bài này hiện tại cần giáo viên đánh giá trực tiếp.");
     }
+}
+
+// --- HÀM MỚI TẠO: CHỈ CHỊU TRÁCH NHIỆM VẼ ĐÁP ÁN ---
+function drawGradingUI() {
+    if (!window.currentExamData) return;
+
+    disableAllInputs(); // Khóa input lại để người dùng không chỉnh sửa được ở tab mới
+
+    window.currentExamData.sections.forEach(section => {
+        section.questionGroups.forEach(group => {
+            group.questions.forEach(q => {
+                // Kiểm tra xem câu hỏi này có đang hiển thị trên màn hình không
+                const qElement = document.getElementById(`question-${q.number}`);
+                if (!qElement) return; // Nếu không có thì bỏ qua (Nằm ở tab khác)
+
+                // Dọn dẹp HTML chấm điểm cũ để tránh in đè khi người dùng click lại tab cũ
+                qElement.querySelectorAll('.result-text, .correct-answer-show').forEach(el => el.remove());
+
+                const studentAnswer = (window.examAnswerSheet[q.number] || '').toString().trim().toLowerCase();
+                const correctAnswer = (q.correctAnswer || '').toString().trim().toLowerCase();
+                let isCorrect = (studentAnswer === correctAnswer && correctAnswer !== '');
+
+                // Tạo thẻ in ✔ Đúng / ✘ Sai
+                const resultSpan = document.createElement('span');
+                resultSpan.className = isCorrect ? 'result-text result-correct' : 'result-text result-wrong';
+                resultSpan.textContent = isCorrect ? '✔ Đúng' : '✘ Sai';
+
+                // Bơm thẻ vào đúng giao diện từng dạng bài
+                if (group.type === 'NOTES_COMPLETION' || group.type === 'GAP_FILL') {
+                    const inputEl = document.querySelector(`input[name="q_${q.number}"]`);
+                    if (inputEl) {
+                        inputEl.insertAdjacentElement('afterend', resultSpan);
+                        if (!isCorrect && q.correctAnswer) {
+                            const correctSpan = document.createElement('span');
+                            correctSpan.className = 'correct-answer-show'; // Gắn class để dễ dọn dẹp
+                            correctSpan.style.color = '#166534';
+                            correctSpan.style.fontWeight = 'bold';
+                            correctSpan.style.marginLeft = '8px';
+                            correctSpan.textContent = `(Đáp án: ${q.correctAnswer})`;
+                            inputEl.insertAdjacentElement('afterend', correctSpan);
+                        }
+                    }
+                } else if (group.type === 'MATCHING') {
+                    qElement.appendChild(resultSpan);
+                    if (!isCorrect && q.correctAnswer) {
+                        const correctSpan = document.createElement('div');
+                        correctSpan.className = 'correct-answer-show';
+                        correctSpan.style.marginTop = '5px';
+                        correctSpan.textContent = `Nối đúng: ${q.correctAnswer}`;
+                        qElement.appendChild(correctSpan);
+                    }
+                } else {
+                    const qText = qElement.querySelector('.question-text') || qElement;
+                    qText.appendChild(resultSpan);
+                    if (q.correctAnswer) {
+                        const radios = qElement.querySelectorAll(`input[type="radio"]`);
+                        radios.forEach(radio => {
+                            if (radio.value.trim().toLowerCase() === correctAnswer) {
+                                radio.parentElement.style.backgroundColor = '#dcfce7';
+                                radio.parentElement.style.border = '1px solid #22c55e';
+                                radio.parentElement.style.borderRadius = '4px';
+                                radio.parentElement.style.padding = '4px 8px';
+                                radio.parentElement.style.display = 'inline-block';
+                            }
+                        });
+                    }
+                }
+            });
+        });
+    });
 }

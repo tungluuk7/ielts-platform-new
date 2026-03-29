@@ -117,6 +117,7 @@ function renderQuestionsByType(group) {
                 render();
                 questionsPane.scrollTo(0, 0);
                 materialPane.scrollTo(0, 0);
+                document.dispatchEvent(new Event('examTabChanged'));
             });
         });
 
