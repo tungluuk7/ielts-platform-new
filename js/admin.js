@@ -309,9 +309,15 @@ builderForm.addEventListener('submit', async (e) => {
             };
 
             if (groupType === 'NOTES_COMPLETION') {
-                let rawNotes = grpNode.querySelector('.grp-notes-content').value.trim();
-                let formattedNotes = rawNotes.replace(/\n/g, '<br>');
-                const regex = /\[(\d+):\s*([^\]]+)\]/g;
+                    let rawNotes = grpNode.querySelector('.grp-notes-content').value.trim();
+                    
+                    // FIX MỚI: Xóa các dấu Enter nằm giữa các thẻ HTML để tránh sinh ra <br> rác làm vỡ bảng
+                    let cleanedNotes = rawNotes.replace(/>\s*\n\s*</g, '><'); 
+                    // Các dấu Enter ở văn bản bình thường mới chuyển thành <br>
+                    let formattedNotes = cleanedNotes.replace(/\n/g, '<br>'); 
+
+                    const regex = /\[(\d+):\s*([^\]]+)\]/g;
+                    // ... (Đoạn regex giữ nguyên không đổi)
                 formattedNotes = formattedNotes.replace(regex, (match, qNumStr, qAns) => {
                     const qNum = parseInt(qNumStr);
                     groupData.questions.push({ number: qNum, correctAnswer: qAns.trim() });

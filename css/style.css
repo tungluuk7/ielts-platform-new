@@ -583,10 +583,18 @@ body.dark-mode .filter-btn:not(.active) {
 }
 
 /* --- IELTS Table Format --- */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto; /* Cho phép cuộn ngang nếu bảng quá to */
+    margin-bottom: 20px;
+    border-radius: var(--radius-sm);
+    box-shadow: 0 0 0 1px var(--border-color); /* Tạo viền bao quanh mượt hơn */
+}
+
 .ielts-table {
     width: 100%;
+    min-width: 650px; /* Ép bảng không bị bóp méo khi màn hình nhỏ */
     border-collapse: collapse;
-    margin: 20px 0;
     background-color: var(--container-bg);
 }
 
@@ -604,8 +612,10 @@ body.dark-mode .filter-btn:not(.active) {
     color: var(--text-main);
 }
 
-/* Tinh chỉnh input gap-fill khi nằm trong bảng */
+/* Ép input co giãn thông minh trong bảng */
 .ielts-table .gap-fill-input {
-    width: 150px; /* Giới hạn độ dài ô input trong bảng cho gọn */
+    width: 100%; 
+    max-width: 200px; 
+    box-sizing: border-box;
     margin-top: 5px;
 }
