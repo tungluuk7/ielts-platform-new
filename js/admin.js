@@ -169,7 +169,12 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
 
             <div class="notes-group-area" style="display: none; margin-top: 15px; border-top: 1px dashed var(--border-color); padding-top: 15px;">
-                <label style="font-size: 14px; font-weight: 600; color: var(--primary-color);">Dán toàn bộ đoạn văn/ghi chú vào đây:</label>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <label style="font-size: 14px; font-weight: 600; color: var(--primary-color);">Dán toàn bộ đoạn văn/ghi chú/bảng vào đây:</label>
+                    
+                    <button type="button" class="btn btn-secondary btn-insert-table" style="font-size: 12px; padding: 4px 8px;">+ Chèn Bảng (Table)</button>
+                </div>
+                
                 <textarea class="builder-input grp-notes-content" rows="8" placeholder="Cú pháp: [số câu: đáp án]"></textarea>
             </div>
         </div>
@@ -207,8 +212,35 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.classList.contains('remove-node')) e.target.closest('.builder-card').remove();
         if (e.target.classList.contains('btn-add-group')) e.target.previousElementSibling.insertAdjacentHTML('beforeend', getGroupHTML());
         if (e.target.classList.contains('btn-add-question')) e.target.previousElementSibling.insertAdjacentHTML('beforeend', getQuestionHTML());
+        
+        // --- LOGIC SINH BẢNG TỰ ĐỘNG ---
+        if (e.target.classList.contains('btn-insert-table')) {
+            const cols = prompt("Nhập số CỘT (Columns) của bảng:", "3");
+            const rows = prompt("Nhập số HÀNG (Rows - không tính hàng tiêu đề):", "4");
+            
+            if (cols && rows) {
+                // Viết liền mạch không có \n ở giữa các thẻ tr, td để tránh lỗi thẻ <br> rác khi parse
+                let tableHTML = `\n<table class="ielts-table"><tbody><tr>`;
+                
+                // Sinh Tiêu đề
+                for(let i=1; i<=cols; i++) tableHTML += `<th>Tiêu đề ${i}</th>`;
+                tableHTML += `</tr>`;
+                
+                // Sinh Nội dung
+                for(let r=1; r<=rows; r++) {
+                    tableHTML += `<tr>`;
+                    for(let c=1; c<=cols; c++) tableHTML += `<td>Nội dung / [1: đáp án]</td>`;
+                    tableHTML += `</tr>`;
+                }
+                tableHTML += `</tbody></table>\n`;
+                
+                // Chèn vào textarea
+                const textarea = e.target.closest('.notes-group-area').querySelector('.grp-notes-content');
+                textarea.value += tableHTML;
+                alert("Đã chèn khung Bảng HTML vào ô nhập liệu. Bạn hãy sửa chữ bên trong theo đề bài nhé!");
+            }
+        }
     });
-
     // Lắng nghe sự kiện chuyển đổi loại câu hỏi để hiện Textarea thông minh
     sectionsContainer.addEventListener('change', (e) => {
         if (e.target.classList.contains('grp-type')) {
