@@ -232,19 +232,24 @@ function restoreAnswers(section) {
 
     // Khởi chạy render lần đầu
     render();
-}// --- KHỞI TẠO TOOLBAR NỔI (Chỉ tạo 1 lần) ---
+}// --- KHỞI TẠO TOOLBAR NỔI (Hỗ trợ 2 màu) ---
     if (!document.getElementById('highlight-toolbar')) {
         const tb = document.createElement('div');
         tb.id = 'highlight-toolbar';
+        
+        // Thêm nút Xanh lá và đổi tên các nút cho gọn
         tb.innerHTML = `
-            <button class="hl-btn" id="btn-add-hl">🖍 Highlight</button>
+            <button class="hl-btn hl-btn-pink" id="btn-hl-pink">🖍 Hồng</button>
             <span style="color:#475569;">|</span>
-            <button class="hl-btn" id="btn-remove-hl" title="Bôi đen vùng đã tô để xóa">🗑 Xóa</button>
+            <button class="hl-btn hl-btn-green" id="btn-hl-green">🖍 Xanh</button>
+            <span style="color:#475569;">|</span>
+            <button class="hl-btn hl-btn-clear" id="btn-remove-hl" title="Bôi đen vùng đã tô để xóa">🗑 Xóa</button>
         `;
         document.body.appendChild(tb);
 
-        // Sự kiện Tô màu và Xóa màu
-        document.getElementById('btn-add-hl').addEventListener('click', () => applyHighlight('#ffd1dc')); // Màu hồng pastel
+        // Sự kiện Tô màu (Pink & Green) và Xóa màu
+        document.getElementById('btn-hl-pink').addEventListener('click', () => applyHighlight('#ffd1dc'));
+        document.getElementById('btn-hl-green').addEventListener('click', () => applyHighlight('#dcfce7'));
         document.getElementById('btn-remove-hl').addEventListener('click', () => applyHighlight('transparent'));
     }
 
