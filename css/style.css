@@ -619,3 +619,48 @@ body.dark-mode .filter-btn:not(.active) {
     box-sizing: border-box;
     margin-top: 5px;
 }
+
+/* --- Floating Highlight Toolbar --- */
+#highlight-toolbar {
+    position: absolute;
+    background: #1e293b; /* Màu tối sang trọng */
+    border: 1px solid #334155;
+    padding: 6px 12px;
+    border-radius: 8px;
+    display: none; /* Ẩn mặc định */
+    z-index: 9999;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s ease;
+}
+
+#highlight-toolbar::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px 6px 0;
+    border-style: solid;
+    border-color: #1e293b transparent transparent transparent;
+}
+
+.hl-btn {
+    background: transparent;
+    border: none;
+    color: #e2e8f0;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 4px;
+}
+
+.hl-btn:hover {
+    color: #ffd1dc; /* Hover ra màu hồng pastel */
+}
+
+/* Đảm bảo bài đọc hiển thị màu chuẩn */
+.passage-content {
+    outline: none; /* Ẩn viền khi bật contentEditable */
+}

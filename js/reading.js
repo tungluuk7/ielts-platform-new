@@ -7,12 +7,16 @@ export function renderReading(examData, materialPane, questionsPane, onAnswerUpd
     }
 
     let currentSectionIndex = 0;
-
+    window.passageHTMLStates = window.passageHTMLStates || {};
     // --- Hàm render giao diện chính ---
+  
     function render() {
-        const section = examData.sections[currentSectionIndex];
+        const currentSection = examData.sections[currentSectionIndex];
         
-        // 1. Render Cột trái (Ngữ liệu)
+        // Ưu tiên lấy HTML đã được tô màu (nếu có), nếu không thì lấy gốc
+        const contentHTML = window.passageHTMLStates[currentSection.sectionId] || currentSection.content;
+
+        // 1. Render Cột trái (Ngữ liệu) - Gộp chung Tab và Bài đọc vào đây
         materialPane.innerHTML = `
             <div class="passage-tabs">
                 ${examData.sections.map((sec, idx) => `
@@ -21,11 +25,16 @@ export function renderReading(examData, materialPane, questionsPane, onAnswerUpd
                     </button>
                 `).join('')}
             </div>
-            <div class="passage-content">
-                <h3 style="margin-top: 15px;">${section.title}</h3>
-                <div class="passage-text">${section.content}</div>
+            
+            <div class="passage-content" data-section-id="${currentSection.sectionId}">
+                <h2 style="margin-top: 15px;">${currentSection.title}</h2>
+                <div class="passage-text" style="line-height: 1.8;">
+                    ${contentHTML}
+                </div>
             </div>
         `;
+        
+        // ... (Bên dưới giữ nguyên phần render cột phải - questionsPane của bạn) ...
 
         // 2. Render Cột phải (Câu hỏi)
         let questionsHTML = '';
@@ -223,4 +232,67 @@ function restoreAnswers(section) {
 
     // Khởi chạy render lần đầu
     render();
-}
+}// --- KHỞI TẠO TOOLBAR NỔI (Chỉ tạo 1 lần) ---
+    if (!document.getElementById('highlight-toolbar')) {
+        const tb = document.createElement('div');
+        tb.id = 'highlight-toolbar';
+        tb.innerHTML = `
+            <button class="hl-btn" id="btn-add-hl">🖍 Highlight</button>
+            <span style="color:#475569;">|</span>
+            <button class="hl-btn" id="btn-remove-hl" title="Bôi đen vùng đã tô để xóa">🗑 Xóa</button>
+        `;
+        document.body.appendChild(tb);
+
+        // Sự kiện Tô màu và Xóa màu
+        document.getElementById('btn-add-hl').addEventListener('click', () => applyHighlight('#ffd1dc')); // Màu hồng pastel
+        document.getElementById('btn-remove-hl').addEventListener('click', () => applyHighlight('transparent'));
+    }
+
+    // --- HÀM TÔ MÀU BẢO TOÀN THẺ HTML ---
+    function applyHighlight(color) {
+        const passageDiv = document.querySelector('.passage-content');
+        if(!passageDiv) return;
+
+        // Bật edit tạm thời để dùng lệnh hệ thống (Tránh lỗi đứt đoạn thẻ <p>)
+        passageDiv.contentEditable = "true";
+        document.execCommand('styleWithCSS', false, true); // Ép dùng inline style
+        document.execCommand('backColor', false, color);
+        passageDiv.contentEditable = "false";
+
+        // Lưu ngay cục HTML vừa được tô màu vào bộ nhớ ảo để chuyển tab không bị mất
+        const sectionId = passageDiv.getAttribute('data-section-id');
+        window.passageHTMLStates[sectionId] = passageDiv.querySelector('.passage-text').innerHTML;
+
+        // Ẩn toolbar và bỏ bôi đen
+        document.getElementById('highlight-toolbar').style.display = 'none';
+        window.getSelection().removeAllRanges();
+    }
+
+    // --- LẮNG NGHE SỰ KIỆN CHUỘT BÔI ĐEN ---
+    document.addEventListener('mouseup', (e) => {
+        const toolbar = document.getElementById('highlight-toolbar');
+        if (!toolbar) return;
+        
+        const selection = window.getSelection();
+
+        // Ẩn toolbar nếu click ra ngoài hoặc không bôi đen chữ
+        if (selection.isCollapsed) {
+            if (!e.target.closest('#highlight-toolbar')) {
+                toolbar.style.display = 'none';
+            }
+            return;
+        }
+
+        // Chỉ hiện toolbar khi bôi đen trong khu vực cột trái (bài đọc)
+        const passageDiv = e.target.closest('.passage-content');
+        if (passageDiv && selection.toString().trim().length > 0) {
+            // Tính toán vị trí vùng chữ vừa bôi đen
+            const range = selection.getRangeAt(0);
+            const rect = range.getBoundingClientRect();
+            
+            toolbar.style.display = 'flex';
+            // Đặt toolbar nằm chính giữa và ngay trên đoạn chữ được bôi đen
+            toolbar.style.top = (rect.top + window.scrollY - 45) + 'px';
+            toolbar.style.left = (rect.left + window.scrollX + rect.width / 2 - toolbar.offsetWidth / 2) + 'px';
+        }
+    });
