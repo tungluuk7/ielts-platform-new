@@ -9,8 +9,8 @@ export function renderReading(examData, materialPane, questionsPane, onAnswerUpd
     let currentSectionIndex = 0;
     window.passageHTMLStates = window.passageHTMLStates || {};
     // --- Hàm render giao diện chính ---
-  
     function render() {
+        const section = examData.sections[currentSectionIndex];
         const currentSection = examData.sections[currentSectionIndex];
         
         // Ưu tiên lấy HTML đã được tô màu (nếu có), nếu không thì lấy gốc
