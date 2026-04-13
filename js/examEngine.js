@@ -124,6 +124,8 @@ function initQuestionPalette(totalQuestions) {
     const paletteGrid = document.getElementById('question-palette');
     paletteGrid.innerHTML = '';
     
+    if (!palette) return;
+
     if(totalQuestions === 0) {
         paletteGrid.innerHTML = '<p style="text-align:center; color: var(--text-muted); grid-column: 1/-1;">Not Applicable</p>';
         return;
