@@ -319,7 +319,7 @@ function restoreAnswers(section) {
         }
     });
 
-    // --- TÍNH NĂNG KÉO THẢ CHIA CỘT (RESIZER) ---
+    // --- TÍNH NĂNG KÉO THẢ CHIA CỘT (RESIZER V2 - FIX LỖI ĐỨNG HÌNH) ---
     const resizer = document.getElementById('drag-resizer');
     const leftPane = document.getElementById('left-resize-wrapper');
     const rightPane = document.getElementById('right-resize-wrapper');
@@ -329,21 +329,29 @@ function restoreAnswers(section) {
         resizer.addEventListener('mousedown', (e) => {
             isResizing = true;
             resizer.classList.add('dragging');
-            document.body.style.userSelect = 'none'; // Chống bôi đen chữ khi đang kéo
+            document.body.style.userSelect = 'none'; // Chống bôi đen chữ
+            
+            // FIX 1: Ép CSS nhả quyền kiểm soát Flexbox để cho phép đổi width
+            leftPane.style.flex = 'none';
+            rightPane.style.flex = 'none';
         });
 
         document.addEventListener('mousemove', (e) => {
             if (!isResizing) return;
-            const containerWidth = leftPane.parentElement.offsetWidth;
-            // Tính toán % width mới dựa trên vị trí chuột
-            let newLeftWidth = (e.clientX / containerWidth) * 100;
             
-            // Ép giới hạn: Không nhỏ hơn 30% và không lớn hơn 70%
-            if (newLeftWidth < 30) newLeftWidth = 30;
-            if (newLeftWidth > 70) newLeftWidth = 70;
+            const container = leftPane.parentElement;
+            const containerRect = container.getBoundingClientRect();
+            
+            // FIX 2: Tính tọa độ chuột chuẩn xác so với mép trái của khung màn hình
+            const mouseX = e.clientX - containerRect.left;
+            let newLeftWidth = (mouseX / containerRect.width) * 100;
+            
+            // Ép giới hạn: Không nhỏ hơn 20% và không lớn hơn 80%
+            if (newLeftWidth < 20) newLeftWidth = 20;
+            if (newLeftWidth > 80) newLeftWidth = 80;
 
             leftPane.style.width = `${newLeftWidth}%`;
-            rightPane.style.width = `calc(${100 - newLeftWidth}% - 16px)`; // 16px là phần bù cho thanh kéo
+            rightPane.style.width = `calc(${100 - newLeftWidth}% - 16px)`; 
         });
 
         document.addEventListener('mouseup', () => {
@@ -353,4 +361,6 @@ function restoreAnswers(section) {
                 document.body.style.userSelect = '';
             }
         });
+    } else {
+        console.error("Lỗi Resizer: Không tìm thấy ID 'drag-resizer', 'left-resize-wrapper' hoặc 'right-resize-wrapper'. Hãy kiểm tra lại file exam.html");
     }
