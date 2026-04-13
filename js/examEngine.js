@@ -122,9 +122,11 @@ function initTimer(seconds) {
 // Hàm render danh sách câu hỏi bên phải (Palette)
 function initQuestionPalette(totalQuestions) {
     const paletteGrid = document.getElementById('question-palette');
+
+    if (!palette) return;
     paletteGrid.innerHTML = '';
     
-    if (!palette) return;
+    
 
     if(totalQuestions === 0) {
         paletteGrid.innerHTML = '<p style="text-align:center; color: var(--text-muted); grid-column: 1/-1;">Not Applicable</p>';
