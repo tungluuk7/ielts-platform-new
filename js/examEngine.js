@@ -120,13 +120,16 @@ function initTimer(seconds) {
 }
 
 // Hàm render danh sách câu hỏi bên phải (Palette)
+// Hàm render danh sách câu hỏi bên phải (Palette)
 function initQuestionPalette(totalQuestions) {
+    // Khai báo biến
     const paletteGrid = document.getElementById('question-palette');
+    
+    // BƯỚC 1: Kiểm tra ĐÚNG TÊN BIẾN vừa khai báo
+    if (!paletteGrid) return; 
 
-    if (!palette) return;
+    // BƯỚC 2: Xóa ruột (chỉ chạy khi paletteGrid có tồn tại)
     paletteGrid.innerHTML = '';
-    
-    
 
     if(totalQuestions === 0) {
         paletteGrid.innerHTML = '<p style="text-align:center; color: var(--text-muted); grid-column: 1/-1;">Not Applicable</p>';
