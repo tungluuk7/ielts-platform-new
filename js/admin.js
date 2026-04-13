@@ -194,7 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <input type="file" class="builder-input sec-image" accept="image/*">
         </div>
         <div class="builder-form-group">
-            <textarea class="builder-input sec-content" rows="4" placeholder="Ngữ liệu bài đọc / Đề bài Writing (Nhấn Enter để xuống dòng)"></textarea>
+            <div class="builder-input sec-content" contenteditable="true" style="min-height: 200px; max-height: 400px; overflow-y: auto; padding: 10px; background: #fff; border: 1px solid var(--border-color); border-radius: 4px;" placeholder="Copy bài đọc từ Web/Word và Paste trực tiếp vào đây để giữ nguyên định dạng (In đậm, in nghiêng, chia đoạn)..."></div>
         </div>
         <div class="groups-container"></div>
         <button type="button" class="btn btn-secondary btn-add-group" style="font-size: 14px;">+ Thêm Nhóm Câu Hỏi</button>
@@ -291,7 +291,7 @@ builderForm.addEventListener('submit', async (e) => {
         const sectionData = {
             sectionId: index + 1,
             title: secNode.querySelector('.sec-title').value.trim(),
-            content: secNode.querySelector('.sec-content').value.trim().replace(/\n/g, '<br>'),
+            content: secNode.querySelector('.sec-content').innerHTML.trim(),
             imageUrl: imageUrl || undefined,
             questionGroups: []
         };

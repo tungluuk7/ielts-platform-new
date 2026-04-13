@@ -25,27 +25,23 @@
         <div class="progress-fill" id="exam-progress"></div>
     </div>
 
-    <!-- MAIN LAYOUT -->
-    <main class="exam-layout">
-        <div class="exam-split-container">
+    <div class="top-navigation-panel" id="top-navigator">
+        </div>
 
-            <div class="exam-left-pane">
-                <div class="pane-content-card" id="exam-material-pane"></div>
+    <main class="exam-layout">
+        <div class="exam-split-container" style="display: flex; flex-direction: row; width: 100%; height: calc(100vh - 140px);">
+
+            <div class="exam-left-pane" id="left-resize-wrapper" style="width: 50%; height: 100%;">
+                <div class="pane-content-card" id="exam-material-pane" style="height: 100%; overflow-y: auto;"></div>
             </div>
 
-            <div class="exam-right-pane">
-                <div class="pane-content-card" id="exam-questions-pane"></div>
+            <div id="drag-resizer" class="resizer"></div>
+
+            <div class="exam-right-pane" id="right-resize-wrapper" style="width: 50%; height: 100%;">
+                <div class="pane-content-card" id="exam-questions-pane" style="height: 100%; overflow-y: auto; padding-right: 10px;"></div>
             </div>
 
         </div>
-
-        <aside class="exam-palette">
-            <h3>Question Navigator</h3>
-            <p style="font-size:13px; color:var(--text-muted)">
-                Click a number to jump to question
-            </p>
-            <div class="palette-grid" id="question-palette"></div>
-        </aside>
     </main>
 
     <!-- SCRIPTS -->

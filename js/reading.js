@@ -54,7 +54,24 @@ export function renderReading(examData, materialPane, questionsPane, onAnswerUpd
             <h3 style="margin-bottom: 15px;">Questions for ${section.title}</h3>
             ${questionsHTML}
         `;
-
+// --- CẬP NHẬT THANH TOP NAVIGATOR ---
+        const topNavigator = document.getElementById('top-navigator');
+        if (topNavigator) {
+            topNavigator.innerHTML = `<span style="font-weight: bold; margin-right: 10px; color: var(--primary-color);">Passage ${currentSectionIndex + 1}:</span>`;
+            
+            // Chỉ lặp qua các câu hỏi của currentSection (Đúng ý số 4 của bạn)
+            currentSection.questionGroups.forEach(group => {
+                group.questions.forEach(q => {
+                    // Kiểm tra xem câu này đã làm chưa để tô màu
+                    const statusClass = window.examAnswerSheet && window.examAnswerSheet[q.number] ? 'answered' : '';
+                    topNavigator.innerHTML += `
+                        <button class="nav-btn ${statusClass}" onclick="document.getElementById('question-${q.number}').scrollIntoView({behavior: 'smooth', block: 'center'})">
+                            ${q.number}
+                        </button>
+                    `;
+                });
+            });
+        }
         // 3. Gắn sự kiện (Event Listeners)
         attachEvents();
         restoreAnswers(section); // Phục hồi đáp án nếu đã làm rồi quay lại
@@ -301,3 +318,39 @@ function restoreAnswers(section) {
             toolbar.style.left = (rect.left + window.scrollX + rect.width / 2 - toolbar.offsetWidth / 2) + 'px';
         }
     });
+
+    // --- TÍNH NĂNG KÉO THẢ CHIA CỘT (RESIZER) ---
+    const resizer = document.getElementById('drag-resizer');
+    const leftPane = document.getElementById('left-resize-wrapper');
+    const rightPane = document.getElementById('right-resize-wrapper');
+    let isResizing = false;
+
+    if (resizer && leftPane && rightPane) {
+        resizer.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            resizer.classList.add('dragging');
+            document.body.style.userSelect = 'none'; // Chống bôi đen chữ khi đang kéo
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+            const containerWidth = leftPane.parentElement.offsetWidth;
+            // Tính toán % width mới dựa trên vị trí chuột
+            let newLeftWidth = (e.clientX / containerWidth) * 100;
+            
+            // Ép giới hạn: Không nhỏ hơn 30% và không lớn hơn 70%
+            if (newLeftWidth < 30) newLeftWidth = 30;
+            if (newLeftWidth > 70) newLeftWidth = 70;
+
+            leftPane.style.width = `${newLeftWidth}%`;
+            rightPane.style.width = `calc(${100 - newLeftWidth}% - 16px)`; // 16px là phần bù cho thanh kéo
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isResizing) {
+                isResizing = false;
+                resizer.classList.remove('dragging');
+                document.body.style.userSelect = '';
+            }
+        });
+    }

@@ -671,3 +671,50 @@ body.dark-mode .filter-btn:not(.active) {
 .passage-content {
     outline: none; /* Ẩn viền khi bật contentEditable */
 }
+
+/* --- 1. Resizer (Thanh kéo chia cột) --- */
+.resizer {
+    width: 8px;
+    background-color: var(--border-color);
+    cursor: col-resize; /* Trỏ chuột hình mũi tên 2 chiều */
+    flex-shrink: 0;
+    z-index: 10;
+    transition: background-color 0.2s;
+    margin: 0 10px;
+    border-radius: 4px;
+}
+.resizer:hover, .resizer.dragging {
+    background-color: var(--primary-color);
+}
+
+/* --- 2. Tinh chỉnh Bài đọc (Size chữ nhỏ lại, giữ Rich Text) --- */
+.passage-text {
+    font-size: 15px; /* Giảm size chữ */
+    line-height: 1.6;
+    text-align: justify; /* Căn đều 2 bên cho đẹp */
+}
+/* Đảm bảo các format từ Word (bôi đậm, căn giữa) hiển thị đúng */
+.passage-text p { margin-bottom: 12px; }
+.passage-text b, .passage-text strong { font-weight: 700; color: var(--text-main); }
+.passage-text i, .passage-text em { font-style: italic; }
+.passage-text [style*="text-align: center"] { text-align: center; display: block; }
+
+/* --- 4. Thanh Navigation chuyển lên TOP --- */
+.top-navigation-panel {
+    background: var(--container-bg);
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.top-navigation-panel .nav-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+}
+/* Ẩn cái panel cũ ở cột phải đi */
+.right-sidebar { display: none !important; }
