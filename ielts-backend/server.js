@@ -10,6 +10,18 @@ dotenv.config();
 
 const app = express();
 
+// 2. THÊM TOÀN BỘ KHỐI NÀY NGAY DƯỚI const app = express();
+// Cấp quyền cho Frontend trên Vercel (và cả localhost để bạn test ở máy) được phép gọi API
+app.use(cors({
+    origin: [
+        'https://ielts-platform-new.vercel.app', 
+        'http://127.0.0.1:5500', 
+        'http://localhost:5500',
+        'http://localhost:3000'
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
+}));
 /* ==============================
    MIDDLEWARE
 ============================== */
